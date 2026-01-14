@@ -1,0 +1,63 @@
+---
+- hosts: localhost
+  become: yes
+  vars:
+    app_path: ../app
+
+  tasks:
+    # Mettre à jour le cache apt
+    - name: Mettre à jour le cache apt
+      apt:
+        update_cache: yes
+
+    # Vérifier si Node.js est installé
+    - name: Vérifier Node.js
+      command: node -v
+      register: node_version
+      ignore_errors: yes
+
+    # Installer Node.js si absent
+    - name: Installer Node.js si absent
+      apt:
+        name:
+          - nodejs
+          - build-essential
+        state: present
+      when: node_version.failed
+
+    # Vérifier si npm est installé
+    - name: Vérifier npm
+      command: npm -v
+      register: npm_version
+      ignore_errors: yes
+
+    # Installer npm si absent
+    - name: Installer npm
+      apt:
+        name: npm
+        state: present
+      when: npm_version.failed
+
+    # Installer les dépendances Node.js (idempotent)
+    - name: Installer les dépendances Node
+      npm:
+        path: "{{ app_path }}"
+        state: present
+        production: no
+
+    # Vérifier que node_modules existe
+    - name: Vérifier node_modules
+      stat:
+        path: "{{ app_path }}/node_modules"
+      register: node_modules
+
+    - name: Créer node_modules si nécessaire
+      file:
+        path: "{{ app_path }}/node_modules"
+        state: directory
+      when: not node_modules.stat.exists
+
+    # Message final
+    - name: Afficher un message de fin
+      debug:
+        msg: "Déploiement Ansible terminé avec succès. Health check disponible sur http://localhost:8080/health"
