@@ -18,8 +18,8 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./app
+        working-directory: ./TP-infra-as-code/app
 
       - name: Run tests
         run: npm test
-        working-directory: ./app
+        working-directory: ./TP-infra-as-code/app
