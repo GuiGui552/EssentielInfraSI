@@ -1,19 +1,23 @@
 terraform {
   required_providers {
     docker = {
-        source  = "kreuzwerker/docker"
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0"
     }
   }
 }
 
 provider "docker" {}
 
+# Réseau commun 
 resource "docker_network" "webnet" {
     name = "webnet"
 }
 
+#  Serveurs PostgreSQL 
 resource "docker_container" "db" {
-    name  = "postgres"
+    count = 2
+    name  = "postgres_${count.index + 1}"
     image = "postgres:15"
 
     env = [
@@ -25,10 +29,17 @@ resource "docker_container" "db" {
     networks_advanced {
         name = docker_network.webnet.name
     }
+
+    ports {
+        internal = 5432
+        external = 5432 + count.index
+    }
 }
 
+# Serveurs Node.js 
 resource "docker_container" "app" {
-    name  = "nodeapp"
+    count = 2
+    name  = "nodeapp_${count.index + 1}"
     image = "node:18"
 
     volumes {
@@ -42,20 +53,25 @@ resource "docker_container" "app" {
         "cd /app && npm install && node index.js"
     ]
 
-
     networks_advanced {
         name = docker_network.webnet.name
     }
 
     ports {
         internal = 3000
-        external = 3000
+        external = 3000 + count.index
     }
 }
 
+#  Serveurs Nginx
 resource "docker_container" "nginx" {
-    name  = "nginx"
+    count = 2
+    name  = "nginx_${count.index + 1}"
     image = "nginx:latest"
+
+    depends_on = [
+        docker_container.app
+    ]
 
     volumes {
         host_path      = abspath("../nginx/default.conf")
@@ -64,7 +80,7 @@ resource "docker_container" "nginx" {
 
     ports {
         internal = 80
-        external = 8080
+        external = 8080 + count.index
     }
 
     networks_advanced {

@@ -38,14 +38,14 @@
         state: present
       when: npm_version.failed
 
-    # Installer les dépendances Node.js (idempotent)
+    # Installer les dépendances Node.js
     - name: Installer les dépendances Node
       npm:
         path: "{{ app_path }}"
         state: present
         production: no
 
-    # Vérifier que node_modules existe
+    # Vérifier node_modules
     - name: Vérifier node_modules
       stat:
         path: "{{ app_path }}/node_modules"
@@ -60,4 +60,4 @@
     # Message final
     - name: Afficher un message de fin
       debug:
-        msg: "Déploiement Ansible terminé avec succès. Health check disponible sur http://localhost:8080/health"
+        msg: "Déploiement Node.js terminé avec succès !"

@@ -23,3 +23,15 @@ jobs:
       - name: Run tests
         run: npm test
         working-directory: ./TP-infra-as-code/app
+
+      - name: Health check server 1
+        run: |
+          node ./TP-infra-as-code/app/index.js &
+          sleep 5
+          curl http://localhost:3000/health
+
+      - name: Health check server 2
+        run: |
+          node ./TP-infra-as-code/app/index.js &
+          sleep 5
+          curl http://localhost:3001/health
